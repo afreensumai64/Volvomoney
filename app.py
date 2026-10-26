@@ -1,3 +1,4 @@
+import math
 import os, json, time, uuid, random, urllib.request, urllib.parse
 import xml.etree.ElementTree as ET
 from datetime import date
@@ -30,6 +31,14 @@ CATEGORIES = ["Food", "Travel", "Shopping", "Bills", "Fun", "Health", "Other"]
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
+
+
+def finite_number(value, default=None):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return default
+    return number if math.isfinite(number) else default
 
 
 # ---------------- Models ----------------
@@ -231,10 +240,21 @@ def dashboard():
 @login_required
 def expenses():
     if request.method == "POST":
-        try:
-            amount = float(request.form["amount"])
-        except ValueError:
+        amount = finite_number(request.form.get("amount"))
+        if amount is None or amount <= 0:
             flash("Enter a valid amount.", "danger")
+            return redirect(url_for("expenses"))
+        title = request.form.get("title", "").strip()
+        category = request.form.get("category", "Other")
+        if not title:
+            flash("Enter an expense title.", "danger")
+            return redirect(url_for("expenses"))
+        if category not in CATEGORIES:
+            category = "Other"
+        try:
+            d = date.fromisoformat(request.form.get("day") or date.today().isoformat())
+        except ValueError:
+            flash("Enter a valid date.", "danger")
             return redirect(url_for("expenses"))
         fname = None
         f = request.files.get("receipt")
@@ -245,9 +265,8 @@ def expenses():
                 f.save(os.path.join(app.config["UPLOAD_FOLDER"], fname))
             else:
                 flash("Receipt must be png, jpg or pdf.", "warning")
-        d = date.fromisoformat(request.form.get("day") or date.today().isoformat())
-        db.session.add(Expense(user_id=current_user.id, title=request.form["title"].strip(),
-                               amount=amount, category=request.form["category"], day=d, receipt=fname))
+        db.session.add(Expense(user_id=current_user.id, title=title,
+                               amount=amount, category=category, day=d, receipt=fname))
         db.session.commit()
         flash("Expense added.", "success")
         return redirect(url_for("expenses"))
@@ -276,12 +295,13 @@ def delete_expense(eid):
 @app.post("/budget")
 @login_required
 def set_budget():
-    try:
-        current_user.budget = float(request.form["budget"] or 0)
+    budget = finite_number(request.form.get("budget") or 0)
+    if budget is None or budget < 0:
+        flash("Enter a valid budget.", "danger")
+    else:
+        current_user.budget = budget
         db.session.commit()
         flash("Monthly budget saved.", "success")
-    except ValueError:
-        flash("Enter a valid budget.", "danger")
     return redirect(request.referrer or url_for("expenses"))
 
 
@@ -299,15 +319,20 @@ def receipt(name):
 @login_required
 def savings():
     if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        target = finite_number(request.form.get("target"))
+        saved = finite_number(request.form.get("saved") or 0)
         try:
-            db.session.add(Goal(user_id=current_user.id, name=request.form["name"].strip(),
-                                target=float(request.form["target"]),
-                                saved=float(request.form.get("saved") or 0),
-                                months=int(request.form["months"])))
+            months = int(request.form.get("months", ""))
+        except ValueError:
+            months = 0
+        if not name or target is None or target <= 0 or saved is None or saved < 0 or months <= 0:
+            flash("Please enter valid numbers.", "danger")
+        else:
+            db.session.add(Goal(user_id=current_user.id, name=name, target=target,
+                                saved=saved, months=months))
             db.session.commit()
             flash("Goal created.", "success")
-        except ValueError:
-            flash("Please enter valid numbers.", "danger")
         return redirect(url_for("savings"))
     return render_template("savings.html", goals=current_user.goals)
 
@@ -318,11 +343,12 @@ def goal_add(gid):
     g = db.get_or_404(Goal, gid)
     if g.user_id != current_user.id:
         abort(403)
-    try:
-        g.saved += float(request.form["amount"])
-        db.session.commit()
-    except ValueError:
+    amount = finite_number(request.form.get("amount"))
+    if amount is None or amount <= 0:
         flash("Enter a valid amount.", "danger")
+    else:
+        g.saved += amount
+        db.session.commit()
     return redirect(url_for("savings"))
 
 
@@ -393,7 +419,12 @@ def chat():
 @app.post("/api/chat")
 @login_required
 def api_chat():
-    msgs = (request.get_json(silent=True) or {}).get("messages", [])
+    payload = request.get_json(silent=True)
+    msgs = payload.get("messages", []) if isinstance(payload, dict) else []
+    if not isinstance(msgs, list):
+        msgs = []
+    msgs = [{"role": m.get("role", "user"), "content": m["content"]}
+            for m in msgs if isinstance(m, dict) and isinstance(m.get("content"), str)]
     last = msgs[-1]["content"] if msgs else ""
     key = os.getenv("GEMINI_API_KEY")
     if not key:
