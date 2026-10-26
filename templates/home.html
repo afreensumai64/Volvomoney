@@ -14,7 +14,14 @@
       {% endif %}
     </div>
   </div>
-  <div class="col-lg-5"><div class="hero-stage" data-tips><div class="hero-mascot">{% include '_chachu.html' %}</div></div></div>
+  <div class="col-lg-5">
+    <div class="hero-stage" data-tips>
+      <img class="hero-photo" src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=1000&q=85" alt="Person reviewing a financial plan at a desk" loading="eager">
+      <div class="hero-photo-shade"></div>
+      <div class="hero-caption"><span class="tag"><i class="bi bi-camera"></i> Your money, clearly</span><strong>Small steps. Real progress.</strong></div>
+      <div class="hero-mascot">{% include '_chachu.html' %}</div>
+    </div>
+  </div>
 </section>
 <section class="row g-3 mt-2">
   {% for ic, t, d in [('robot','Budget Chachu','An AI uncle who explains finance in simple, spoken words.'),('newspaper','Market News','Stocks, gold and more from trusted Indian sources.'),('receipt','Expense Tracker','See where every rupee goes, with receipt uploads.'),('bullseye','Savings Planner','Goals, SIP calculator and the 50/30/20 guide.')] %}
