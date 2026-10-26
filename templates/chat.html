@@ -1,0 +1,28 @@
+{% extends 'base.html' %}{% block title %}Budget Chachu{% endblock %}
+{% block content %}
+<div id="chatApp" data-api="{{ url_for('api_chat') }}" data-prefill="{{ prefill }}" class="row g-3">
+  <div class="col-lg-4">
+    <div class="glass stage text-center" data-tips>
+      <div class="stage-mascot">{% include '_chachu.html' %}</div>
+      <h4 class="mb-1">Budget Chachu</h4>
+      <div id="chStatus" class="status-pill" data-state="idle"><span class="eq"><i></i><i></i><i></i><i></i></span><span id="chStatusText">Ready to help</span></div>
+      <p class="small text-secondary mt-3 mb-3">Click me for a quick tip. I follow your cursor and talk when I answer.</p>
+      <button id="voiceBtn" class="btn btn-ghost btn-sm"><i class="bi bi-volume-up"></i> <span>Voice on</span></button>
+    </div>
+  </div>
+  <div class="col-lg-8">
+    <div class="glass chat-card">
+      <div id="msgs" class="msgs"></div>
+      <div class="d-flex flex-wrap gap-2 px-3 pb-2" id="chips">
+        {% for q in ['How do I start saving?','What is SIP?','Explain 50/30/20 rule','Is gold a good investment?','Review my expenses'] %}
+        <button class="pill">{{ q }}</button>{% endfor %}
+      </div>
+      <form id="chatForm" class="d-flex gap-2 p-3 border-top-line">
+        <input id="chatInput" class="form-control" placeholder="Ask Chachu about money..." autocomplete="off">
+        <button class="btn btn-accent"><i class="bi bi-send"></i></button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/chat.js') }}"></script>{% endblock %}

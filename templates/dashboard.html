@@ -1,0 +1,96 @@
+{% extends 'base.html' %}{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div id="dash" data-news="{{ url_for('api_news') }}">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div><h2 class="mb-1">Welcome back, {{ current_user.username }}</h2><span class="text-secondary">Here is your money at a glance.</span></div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-ghost" data-bs-toggle="modal" data-bs-target="#welcomeModal"><i class="bi bi-lightbulb"></i> Smart suggestions</button>
+    <a class="btn btn-accent" href="{{ url_for('expenses') }}"><i class="bi bi-plus-lg"></i> Add expense</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-4"><div class="glass stat"><span class="ico"><i class="bi bi-credit-card"></i></span><div><small>Total spent</small><div class="num">{{ total|inr }}</div></div></div></div>
+  <div class="col-md-4"><div class="glass stat"><span class="ico green"><i class="bi bi-wallet2"></i></span><div class="flex-grow-1"><small>Monthly budget</small>
+    {% if current_user.budget %}<div class="num {{ 'text-danger' if total > current_user.budget else 'text-success' }}">{{ (current_user.budget - total)|inr }} left</div>
+    <div class="progress mt-2"><div class="progress-bar bg-accent" style="width: {{ [100, total / current_user.budget * 100]|min }}%"></div></div>
+    {% else %}<div class="mt-1"><a href="{{ url_for('expenses') }}">Set a budget</a></div>{% endif %}</div></div></div>
+  <div class="col-md-4"><div class="glass stat"><span class="ico amber"><i class="bi bi-piggy-bank"></i></span><div><small>Savings goals</small><div class="num">{{ current_user.goals|length }}</div></div></div></div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-lg-7"><div class="glass p-4 h-100">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0"><i class="bi bi-broadcast text-accent"></i> Market pulse</h5>
+      <div class="d-flex gap-1" id="pulseTabs">
+        <button class="pill on" data-c="stocks">Stocks</button><button class="pill" data-c="gold">Gold</button><button class="pill" data-c="economy">Economy</button>
+      </div>
+    </div>
+    <div id="pulseList" class="pulse-list"></div>
+  </div></div>
+  <div class="col-lg-5"><div class="glass p-4 h-100">
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <div class="mini" data-tips>{% include '_chachu.html' %}</div>
+      <div><div class="eyebrow">Chachu's tip</div><div class="fw-semibold">{{ tip }}</div></div>
+    </div>
+    <a class="btn btn-ghost w-100" href="{{ url_for('chat') }}"><i class="bi bi-chat-dots"></i> Ask Budget Chachu</a>
+  </div></div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-lg-6"><div class="glass p-4 h-100"><h5><i class="bi bi-pie-chart text-accent"></i> Spending by category</h5>
+    {% for c, v in by.items() %}<div class="d-flex justify-content-between small mt-3"><span>{{ c }}</span><span>{{ v|inr }}</span></div>
+    <div class="progress"><div class="progress-bar bg-accent" style="width: {{ v / total * 100 }}%"></div></div>
+    {% else %}<p class="text-secondary mt-3">No expenses yet.</p>{% endfor %}</div></div>
+  <div class="col-lg-6"><div class="glass p-4 h-100"><h5><i class="bi bi-bullseye text-accent"></i> Goals</h5>
+    {% for g in current_user.goals %}<div class="d-flex justify-content-between small mt-3"><span>{{ g.name }}</span><span>{{ g.pct }}%</span></div>
+    <div class="progress"><div class="progress-bar bg-success" style="width: {{ g.pct }}%"></div></div>
+    {% else %}<p class="text-secondary mt-3">No goals yet. <a href="{{ url_for('savings') }}">Create one</a>.</p>{% endfor %}</div></div>
+</div>
+</div>
+
+<!-- Welcome / invest suggestions pop-up -->
+<div class="modal fade" id="welcomeModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content sug-modal">
+    <div class="modal-header border-0 pb-0">
+      <div class="d-flex align-items-center gap-3"><div class="mini">{% include '_chachu.html' %}</div>
+        <div><div class="eyebrow">Personalised for you</div><h4 class="mb-0">Smart ways to put your savings to work</h4></div></div>
+      <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+      <div id="sugCarousel" class="carousel slide" data-bs-ride="false">
+        <div class="carousel-inner">
+          {% for s in suggestions %}
+          <div class="carousel-item {{ 'active' if loop.first }}"><div class="sug-card">
+            <div class="d-flex align-items-center gap-3 mb-3"><span class="ico lg"><i class="bi bi-{{ s.icon }}"></i></span><span class="tag">{{ s.tag }}</span></div>
+            <h4>{{ s.title }}</h4><p class="text-secondary mb-4">{{ s.body }}</p>
+            <a class="btn btn-accent" href="{{ url_for('chat', q=s.prompt) }}"><i class="bi bi-chat-dots"></i> Ask Chachu about this</a>
+          </div></div>{% endfor %}
+        </div>
+        <div class="carousel-indicators sug-dots">
+          {% for s in suggestions %}<button type="button" data-bs-target="#sugCarousel" data-bs-slide-to="{{ loop.index0 }}" class="{{ 'active' if loop.first }}"></button>{% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer border-0 justify-content-between">
+      <small class="text-secondary">Educational only, not financial advice.</small>
+      <div class="d-flex gap-2">
+        <button class="btn btn-ghost btn-sm" data-bs-target="#sugCarousel" data-bs-slide="prev"><i class="bi bi-chevron-left"></i></button>
+        <button class="btn btn-ghost btn-sm" data-bs-target="#sugCarousel" data-bs-slide="next"><i class="bi bi-chevron-right"></i></button>
+        <button class="btn btn-accent btn-sm" data-bs-dismiss="modal">Go to dashboard</button>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+<!-- Pop-up news toast -->
+<div id="newsToast" class="news-toast" role="status">
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <span class="tag"><i class="bi bi-broadcast"></i> Market update</span>
+    <button id="toastClose" class="btn-close btn-sm" aria-label="Dismiss"></button>
+  </div>
+  <a id="toastLink" class="toast-title" target="_blank" rel="noopener" href="#"></a>
+  <small id="toastSrc" class="text-secondary d-block mt-1"></small>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>{% endblock %}

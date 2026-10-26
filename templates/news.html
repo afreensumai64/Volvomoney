@@ -1,0 +1,34 @@
+{% extends 'base.html' %}{% block title %}News{% endblock %}
+{% block content %}
+<h2 class="page-title"><i class="bi bi-newspaper"></i> Daily News Flash</h2>
+<p class="text-secondary">Fresh headlines from Economic Times, Mint, Moneycontrol, Business Standard and BusinessLine.</p>
+<div class="d-flex flex-wrap gap-2 mb-3" id="tabs" data-api="{{ url_for('api_news') }}">
+  <button class="pill on" data-c="stocks"><i class="bi bi-graph-up"></i> Stocks</button>
+  <button class="pill" data-c="gold"><i class="bi bi-coin"></i> Gold</button>
+  <button class="pill" data-c="crypto"><i class="bi bi-currency-bitcoin"></i> Crypto</button>
+  <button class="pill" data-c="economy"><i class="bi bi-bank"></i> Economy</button>
+  <button class="pill" data-c="savings"><i class="bi bi-piggy-bank"></i> Savings</button>
+</div>
+<div class="row g-3" id="list"></div>
+{% endblock %}
+{% block scripts %}
+<script>
+const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const API = document.getElementById('tabs').dataset.api;
+async function load(cat) {
+  const box = document.getElementById('list');
+  box.innerHTML = '<div class="col-md-6 col-lg-4"><div class="skel"></div></div>'.repeat(6);
+  try {
+    const items = await (await fetch(API + '?cat=' + cat)).json();
+    if (!items.length) throw 0;
+    box.innerHTML = items.map(n => `<div class="col-md-6 col-lg-4"><a class="glass p-3 d-block h-100 hover-up text-decoration-none news-item" href="${esc(n.link)}" target="_blank" rel="noopener">
+      <b>${esc(n.title)}</b><small class="d-block mt-2 text-accent">${esc(n.source)} <span class="text-secondary">${esc(n.date)}</span></small></a></div>`).join('');
+  } catch { box.innerHTML = '<p class="text-secondary">Could not load news right now. Check your internet and try again.</p>'; }
+}
+document.querySelectorAll('#tabs .pill').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#tabs .pill').forEach(x => x.classList.toggle('on', x === b));
+  load(b.dataset.c);
+});
+load('stocks');
+</script>
+{% endblock %}

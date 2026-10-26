@@ -1,0 +1,56 @@
+{% extends 'base.html' %}{% block title %}Savings{% endblock %}
+{% block content %}
+<h2 class="page-title"><i class="bi bi-bullseye"></i> Savings Planner &amp; Guide</h2>
+<div class="row g-3 mt-1">
+  <div class="col-lg-6"><div class="glass p-4 h-100">
+    <h5>New savings goal</h5>
+    <form method="post">
+      <input class="form-control mb-2" name="name" placeholder="Goal (e.g. New phone)" required>
+      <input class="form-control mb-2" type="number" name="target" min="1" placeholder="Target amount (₹)" required>
+      <input class="form-control mb-2" type="number" name="saved" min="0" placeholder="Already saved (₹)">
+      <input class="form-control mb-3" type="number" name="months" min="1" placeholder="Months to reach it" required>
+      <button class="btn btn-accent w-100">Create goal</button>
+    </form>
+    {% for g in goals %}
+    <div class="border-top border-secondary-subtle mt-3 pt-3">
+      <div class="d-flex justify-content-between"><b>{{ g.name }}</b><span>{{ g.saved|inr }} / {{ g.target|inr }}</span></div>
+      <div class="progress my-2"><div class="progress-bar bg-success" style="width: {{ g.pct }}%">{{ g.pct }}%</div></div>
+      <small class="text-secondary">Save <b class="text-success">{{ g.monthly|inr }}/month</b> for {{ g.months }} months</small>
+      <div class="d-flex gap-2 mt-2">
+        <form method="post" action="{{ url_for('goal_add', gid=g.id) }}" class="d-flex gap-2 flex-grow-1">
+          <input class="form-control form-control-sm" type="number" name="amount" min="1" placeholder="Add savings ₹" required>
+          <button class="btn btn-sm btn-ghost">Add</button></form>
+        <form method="post" action="{{ url_for('goal_delete', gid=g.id) }}"><button class="btn btn-sm text-danger" title="Delete"><i class="bi bi-trash3"></i></button></form>
+      </div>
+    </div>{% endfor %}
+  </div></div>
+  <div class="col-lg-6 d-flex flex-column gap-3">
+    <div class="glass p-4"><h5>SIP growth calculator</h5>
+      <input id="sM" class="form-control mb-2" type="number" placeholder="Monthly SIP (₹)">
+      <input id="sR" class="form-control mb-2" type="number" placeholder="Expected return % per year (e.g. 12)">
+      <input id="sY" class="form-control mb-2" type="number" placeholder="Years">
+      <button class="btn btn-accent" id="sBtn">Calculate</button><div id="sOut" class="mt-3"></div></div>
+    <div class="glass p-4"><h5>50/30/20 rule</h5>
+      <input id="inc" class="form-control mb-2" type="number" placeholder="Monthly income (₹)">
+      <button class="btn btn-accent" id="rBtn">Split my income</button><div id="rOut" class="mt-3"></div></div>
+    <div class="glass p-4"><h5>Chachu's golden tips</h5>
+      <ul class="text-secondary mb-0"><li>Pay yourself first: save on salary day.</li><li>Build 3-6 months emergency fund first.</li>
+      <li>Avoid credit-card interest, it is 30-40%!</li><li>Start SIP early; time beats timing.</li><li>Insure yourself before investing.</li></ul></div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
+document.getElementById('sBtn').onclick = () => {
+  const P = +sM.value, r = (+sR.value || 0) / 1200, n = (+sY.value || 0) * 12;
+  if (!P || !n) return sOut.textContent = 'Enter SIP amount and years.';
+  const fv = r ? P * ((Math.pow(1 + r, n) - 1) / r) * (1 + r) : P * n, inv = P * n;
+  sOut.innerHTML = `Invested: <b>${inr(inv)}</b><br>Estimated value: <b class="text-success">${inr(fv)}</b><br>Gain: <b>${inr(fv - inv)}</b><br><small class="text-secondary">Estimates only. Returns are not guaranteed.</small>`;
+};
+document.getElementById('rBtn').onclick = () => {
+  const i = +inc.value; if (!i) return rOut.textContent = 'Enter your income.';
+  rOut.innerHTML = `Needs (50%): <b>${inr(i*.5)}</b><br>Wants (30%): <b>${inr(i*.3)}</b><br>Savings (20%): <b class="text-success">${inr(i*.2)}</b>`;
+};
+</script>
+{% endblock %}

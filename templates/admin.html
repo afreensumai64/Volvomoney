@@ -1,0 +1,17 @@
+{% extends 'base.html' %}{% block title %}Admin{% endblock %}
+{% block content %}
+<h2 class="page-title"><i class="bi bi-shield-lock"></i> Admin Panel</h2>
+<div class="row g-3 my-1">
+  {% for l, v in [('Users', stats.users), ('Expenses logged', stats.expenses), ('Money tracked', stats.tracked|inr), ('Savings goals', stats.goals)] %}
+  <div class="col-6 col-md-3"><div class="glass p-3"><small class="text-secondary">{{ l }}</small><div class="fs-3 fw-bold">{{ v }}</div></div></div>{% endfor %}
+</div>
+<div class="glass p-4 mt-3"><h5>All users</h5>
+  <div class="table-responsive"><table class="table align-middle">
+    <thead><tr><th>ID</th><th>Username</th><th>Role</th><th>Expenses</th><th>Goals</th><th></th></tr></thead><tbody>
+    {% for u in users %}<tr><td>{{ u.id }}</td><td>{{ u.username }}</td>
+      <td><span class="badge {{ 'text-bg-warning' if u.is_admin else 'text-bg-secondary' }}">{{ 'Admin' if u.is_admin else 'User' }}</span></td>
+      <td>{{ u.expenses|length }}</td><td>{{ u.goals|length }}</td>
+      <td>{% if not u.is_admin %}<form method="post" action="{{ url_for('admin_delete_user', uid=u.id) }}" onsubmit="return confirm('Delete {{ u.username }}?')"><button class="btn btn-sm btn-outline-danger">Delete</button></form>{% endif %}</td></tr>{% endfor %}
+    </tbody></table></div>
+</div>
+{% endblock %}
