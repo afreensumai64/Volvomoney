@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Finspire - Make Money Make Sense
 
 ## Team Members
@@ -45,3 +46,6 @@ python app.py
 ```
 Open http://127.0.0.1:5000 . Demo user: demo/demo123, Admin: admin/admin123.
 Optional: copy `.env.example` to `.env` and add a Gemini key for the full AI brain.
+=======
+# Volvomoney--finspire
+>>>>>>> c83956ed5ed440ee2b04873fb672a79910533f67
