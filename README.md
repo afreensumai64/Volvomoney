@@ -54,9 +54,6 @@ Budget Chachu sends the conversation, plus a summary of the user's expenses, bud
 
 *(Add any Copilot prompts you used here.)*
 
-## AI-Generated Code That Was Modified
-
-*(Write only what you really changed. Examples to replace this line: changed the colour theme, edited Chachu's tips and offline answers, adjusted the suggestion-card logic, renamed categories.)*
 
 ## Bug Solved Independently
 
